@@ -6,7 +6,7 @@ import sqlite3
 from contextlib import closing
 import os.path
 
-name = "your username"
+name = "your name"
 password = "your password"
 url = "URL where you want to access"
 
