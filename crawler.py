@@ -100,6 +100,19 @@ class EditDB:
             for row in cur.fetchall():
                 print(row)
 
+    def reacquire_table(self, database_name, database_table_name):
+        with ShibbolethClient(name, password) as client:
+            res = client.get(url)
+
+        soup = BeautifulSoup(res, "lxml")
+        EditDB.dates = soup.select('dd.nl_notice_date')
+        EditDB.charges = soup.select('dd.nl_div_in_charge')
+        EditDB.categories = soup.select('dd.nl_category')
+        EditDB.notices = soup.select('dd.nl_notice')
+
+        self.insert_row(database_name, database_table_name)
+        print("Acquire completed")
+
 
 if __name__ == "__main__":
     DBname = input("Please input DB name:")
@@ -123,5 +136,7 @@ if __name__ == "__main__":
             set_str = input("Please input SET sentence:")
             condition_str = input("Please input condition")
             editDB.update_row(DBname, DBtable_name, set_str, condition_str)
+        elif command == "acquire":
+            editDB.reacquire_table(DBname, DBtable_name)
         else:
             print("This command is wrong")
