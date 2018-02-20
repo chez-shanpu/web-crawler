@@ -28,44 +28,83 @@ class EditDB:
         EditDB.categories = soup.select('dd.nl_category')
         EditDB.notices = soup.select('dd.nl_notice')
 
-    def table_isexists(self, database_name):
+    def table_isexists(self, database_name, database_table_name):
         DBpath = "./" + database_name
+
         if (not os.path.isfile(DBpath)):
             print("There is no " + database_name)
+            sys.exit(1)
         else:
             with closing(sqlite3.connect(database_name)) as conn:
                 cur = conn.cursor()
-                cur.execute("""
-                        SELECT COUNT(*) FROM sqlite_master 
-                        WHERE TYPE='table' AND name='kit_notice'
-                        """)
+                sql = "SELECT COUNT(*) FROM sqlite_master " \
+                      "WHERE TYPE='table' AND name='" + database_table_name + "'"
+                cur.execute(sql)
                 if cur.fetchone()[0] == 0:
                     return False
                 return True
 
-    def createDBtable(self, database_name):
+    def createDBtable(self, database_name, database_table_name):
         with closing(sqlite3.connect(database_name)) as conn:
             c = conn.cursor()
-            create_table = '''create table kit_notice (date VARCHAR, charge VARCHAR ,category VARCHAR , notice text )'''
+            create_table = "create table " + database_table_name \
+                           + " (date VARCHAR, charge VARCHAR ,category VARCHAR , notice text )"
             c.execute(create_table)
             conn.commit()
 
-    def add_row(self, database_name):
+    def insert_row(self, database_name, database_table_name):
         with closing(sqlite3.connect(database_name)) as conn:
-            c = conn.cursor()
+            cur = conn.cursor()
 
-            for date, charge, category, notice in zip(EditDB.dates, EditDB.charges, EditDB.categories, EditDB.notices):
-                sql = 'insert into kit_notice (date, charge, category, notice) values (?,?,?,?)'
-                row = (date.get_text(), charge.get_text(), category.get_text(), notice.get_text().replace("\t", ""))
-                c.execute(sql, row)
+            for date, charge, category, notice \
+                    in zip(EditDB.dates, EditDB.charges, EditDB.categories, EditDB.notices):
+                sql = "insert into " + database_table_name \
+                      + " (date, charge, category, notice) values (?,?,?,?)"
+                row = (date.get_text(), charge.get_text(), category.get_text(),
+                       notice.get_text().replace("\t", ""))
+                cur.execute(sql, row)
 
             conn.commit()
 
+    def delete_row(self, database_name, database_table_name, condition):
+        with closing(sqlite3.connect(database_name)) as conn:
+            cur = conn.cursor()
+            if condition == "":
+                sql = 'DELETE FROM ' + database_table_name
+                cur.execute(sql)
+            else:
+                sql = 'DELETE FROM ' + database_table_name + ' WHERE ' + condition
+                cur.execute(sql)
+            conn.commit()
+
+        print("Delete completed")
+
+    def print_table(self, database_name, database_table_name):
+        with closing(sqlite3.connect(database_name)) as conn:
+            cur = conn.cursor()
+            sql = 'select * from ' + database_table_name
+            cur.execute(sql)
+            for row in cur.fetchall():
+                print(row)
+
 
 if __name__ == "__main__":
-    DBname = 'KIT.db'
+    DBname = input("Please input DB name:")
+    DBtable_name = input("Please input table name:")
 
     editDB = EditDB()
-    if not editDB.table_isexists(DBname):
-        editDB.createDBtable(DBname)
-    editDB.add_row(DBname)
+    if not editDB.table_isexists(DBname, DBtable_name):
+        editDB.createDBtable(DBname, DBtable_name)
+    editDB.insert_row(DBname, DBtable_name)
+
+    while True:
+        command = input("Please input command:")
+        if command == "exit":
+            break
+        elif command == "print":
+            editDB.print_table(DBname, DBtable_name)
+        elif command == "delete":
+            condition_str = input("Please input condition:")
+            editDB.delete_row(DBname, DBtable_name, condition_str)
+        else:
+            print("This command is wrong")
