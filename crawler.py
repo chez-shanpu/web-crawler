@@ -79,6 +79,19 @@ class EditDB:
 
         print("Delete completed")
 
+    def update_row(self, database_name, database_table_name, set_str, condition):
+        with closing(sqlite3.connect(database_name)) as conn:
+            cur = conn.cursor()
+            if condition == "":
+                sql = 'UPDATE ' + database_table_name + " SET " + set_str
+                cur.execute(sql)
+            else:
+                sql = 'UPDATE ' + database_table_name + " SET " + set_str + ' WHERE ' + condition
+                cur.execute(sql)
+            conn.commit()
+
+        print("Update completed")
+
     def print_table(self, database_name, database_table_name):
         with closing(sqlite3.connect(database_name)) as conn:
             cur = conn.cursor()
@@ -106,5 +119,9 @@ if __name__ == "__main__":
         elif command == "delete":
             condition_str = input("Please input condition:")
             editDB.delete_row(DBname, DBtable_name, condition_str)
+        elif command == "update":
+            set_str = input("Please input SET sentence:")
+            condition_str = input("Please input condition")
+            editDB.update_row(DBname, DBtable_name, set_str, condition_str)
         else:
             print("This command is wrong")
